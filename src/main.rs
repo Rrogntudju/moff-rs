@@ -22,7 +22,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             let mons_ptr = mons.as_mut_ptr();
             forget(mons);
-            
+
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
                 for mon in mons {
@@ -30,6 +30,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                     let max: u32 = 0;
                     let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
                     let pvct = &mut vct;
+                    
                     if GetVCPFeatureAndVCPFeatureReply(
                         mon.hPhysicalMonitor,
                         0xD6,
