@@ -15,9 +15,9 @@ use bindings::Windows::{
 use std::{mem::forget, usize};
 
 unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
-    let mon_count: u32 = 0;
+    let mut mon_count: u32 = 0;
 
-    if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, mon_count as *mut u32) != 0 {
+    if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             let mons_ptr = mons.as_mut_ptr();
@@ -26,17 +26,16 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
                 for mon in mons {
-                    let current: u32 = 0;
-                    let max: u32 = 0;
+                    let mut current: u32 = 0;
+                    let mut max: u32 = 0;
                     let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
-                    let pvct = &mut vct;
-                    
+
                     if GetVCPFeatureAndVCPFeatureReply(
                         mon.hPhysicalMonitor,
                         0xD6,
-                        pvct as *mut MC_VCP_CODE_TYPE,
-                        current as *mut u32,
-                        max as *mut u32,
+                        &mut vct as *mut MC_VCP_CODE_TYPE,
+                        &mut current as *mut u32,
+                        &mut max as *mut u32,
                     ) != 0
                     {
                         if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current == 1 { 5 } else { 1 }) == 0 {
