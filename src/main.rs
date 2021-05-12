@@ -21,15 +21,16 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
     let mon_count: u32 = 0;
     if  GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, mon_count as *mut u32) != 0 {
         if mon_count > 0 {
-            let mons_ptr = HeapAlloc(GetProcessHeap(), HEAP_FLAGS(0), mem::size_of::<PHYSICAL_MONITOR>() * mon_count as usize);
-            if mons_ptr  != ptr::null_mut() {
+            let mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
+            let mons_ptr = mons.as_mut_ptr();
+            mem::forget(mons);
+
                 let mons = slice::from_raw_parts(mons_ptr as *const PHYSICAL_MONITOR, mon_count as usize);
                 for mon in mons {
 
                 }
 
-                mem::forget(mons);
-                HeapFree(GetProcessHeap(), HEAP_FLAGS(0), mons_ptr);
+
             }
         } else {
             print_last_error("HeapAlloc");
