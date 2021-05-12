@@ -9,7 +9,7 @@ fn main() {
                 DestroyPhysicalMonitor, 
                 SetVCPFeature, 
                 PHYSICAL_MONITOR },
-            Windows::Win32::SystemServices::{HANDLE, BOOL, HeapAlloc, HeapFree, GetProcessHeap, HEAP_FLAGS},
+            Windows::Win32::SystemServices::{HANDLE, BOOL,},
             Windows::Win32::WindowsAndMessaging::LPARAM,
         );
     }

@@ -2,7 +2,7 @@ mod bindings {
     windows::include_bindings!();
 }
 
-use std::{mem, slice, ptr};
+use std::{mem::forget, usize};
 use bindings::Windows::{
     Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
     Win32::DisplayDevices::{RECT,},
@@ -12,7 +12,7 @@ use bindings::Windows::{
             DestroyPhysicalMonitor, 
             SetVCPFeature, 
             PHYSICAL_MONITOR },
-    Win32::SystemServices::{HANDLE, BOOL, HeapAlloc, HeapFree, GetProcessHeap, HEAP_FLAGS},
+    Win32::SystemServices::{HANDLE, BOOL,},
     Win32::WindowsAndMessaging::LPARAM,
 };
 
@@ -21,19 +21,23 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
     let mon_count: u32 = 0;
     if  GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, mon_count as *mut u32) != 0 {
         if mon_count > 0 {
-            let mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
+            let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             let mons_ptr = mons.as_mut_ptr();
-            mem::forget(mons);
-
-                let mons = slice::from_raw_parts(mons_ptr as *const PHYSICAL_MONITOR, mon_count as usize);
+            forget(mons);
+            if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
+                let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
                 for mon in mons {
-
+                    if SetVCPFeature(mon.hPhysicalMonitor, 0xd6, ) == 0 {
+                        print_last_error("SetVCPFeature");
+                    }
+                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
+                        print_last_error("DestroyPhysicalMonitor");
+                    }
                 }
-
-
+ 
+            } else {
+                print_last_error("GetPhysicalMonitorsFromHMONITOR");
             }
-        } else {
-            print_last_error("HeapAlloc");
         }
     } else {
         print_last_error("GetNumberOfPhysicalMonitorsFromHMONITOR");
