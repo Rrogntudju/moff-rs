@@ -38,7 +38,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                         &mut max as *mut u32,
                     ) != 0
                     {
-                        if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current == 1 { 5 } else { 1 }) == 0 {
+                        if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current == 1 { 4 } else { 1 }) == 0 {
                             print_last_error("SetVCPFeature");
                         }
                     } else {
