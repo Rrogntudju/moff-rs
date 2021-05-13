@@ -30,6 +30,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                     let mut current: u32 = 0;
                     let mut max: u32 = 0;
                     let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
+                    print_capabilities(mon.hPhysicalMonitor);
 
                     if GetVCPFeatureAndVCPFeatureReply(
                         mon.hPhysicalMonitor,
@@ -77,25 +78,24 @@ fn read_ne_u16(input: &mut &[u8]) -> u16 {
 }
 
 unsafe fn print_capabilities(hphymon: HANDLE) {
-    let mut caplen :u32 = 0;
+    let mut len_in_chars :u32 = 0;
    
-    if GetCapabilitiesStringLength(hphymon, &mut caplen as *mut u32) != 0 {
-        let mut cap = Vec::<u8>::with_capacity(caplen as usize);
+    if GetCapabilitiesStringLength(hphymon, &mut len_in_chars as *mut u32) != 0 {
+        let len_in_bytes = (len_in_chars * 2) as usize; // UTF-16
+        let mut cap = Vec::<u8>::with_capacity(len_in_bytes);
         let cap_ptr = cap.as_mut_ptr();
         forget(cap);
 
-        if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), caplen) != 0 {
-            let mut cap = Vec::<u8>::from_raw_parts(cap_ptr, caplen as usize, caplen as usize);
-            cap.pop();  // pop the terminating null
-            assert_eq!(cap.len() % 2, 0);
-            
-            let mut cap_u16 = Vec::<u16>::with_capacity((caplen / 2) as usize);
+        if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), len_in_chars) != 0 {
+            let cap = Vec::<u8>::from_raw_parts(cap_ptr, len_in_bytes, len_in_bytes);
+            let mut cap_u16 = Vec::<u16>::with_capacity(len_in_chars as usize);
             let mut input = &cap[..];
             
-            for _ in 0..caplen / 2 {
+            for _ in 0..len_in_chars {
                 cap_u16.push(read_ne_u16(&mut input));
             }
 
+            cap_u16.pop();  // pop the terminating null
             println!("{}", String::from_utf16(&cap_u16[..]).unwrap());
         } else {
             print_last_error("CapabilitiesRequestAndCapabilitiesReply"); 
