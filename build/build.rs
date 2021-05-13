@@ -13,7 +13,7 @@ fn main() {
                 GetVCPFeatureAndVCPFeatureReply,
                 PHYSICAL_MONITOR,
                 MC_VCP_CODE_TYPE },
-            Windows::Win32::SystemServices::{BOOL, HANDLE},
+            Windows::Win32::SystemServices::{BOOL, HANDLE, PSTR},
             Windows::Win32::WindowsAndMessaging::LPARAM,
         );
     }
