@@ -6,10 +6,10 @@ use bindings::Windows::{
     Win32::DisplayDevices::RECT,
     Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
     Win32::Monitor::{
-        DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
-        SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
+        CapabilitiesRequestAndCapabilitiesReply, DestroyPhysicalMonitor, GetCapabilitiesStringLength, GetNumberOfPhysicalMonitorsFromHMONITOR,
+        GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply, SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
     },
-    Win32::SystemServices::BOOL,
+    Win32::SystemServices::{BOOL, HANDLE},
     Win32::WindowsAndMessaging::LPARAM,
 };
 use std::{mem::forget, usize};
@@ -18,6 +18,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
+        dbg!(mon_count);
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             let mons_ptr = mons.as_mut_ptr();
@@ -29,7 +30,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                     let mut current: u32 = 0;
                     let mut max: u32 = 0;
                     let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
-
+                    dbg!(mon.szPhysicalMonitorDescription);
                     if GetVCPFeatureAndVCPFeatureReply(
                         mon.hPhysicalMonitor,
                         0xD6,
@@ -38,9 +39,10 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                         &mut max as *mut u32,
                     ) != 0
                     {
-                        if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current == 1 { 4 } else { 1 }) == 0 {
+                        dbg!(current);
+                        /* if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current == 1 { 4 } else { 1 }) == 0 {
                             print_last_error("SetVCPFeature");
-                        }
+                        } */
                     } else {
                         print_last_error("GetVCPFeatureAndVCPFeatureReply")
                     }
@@ -65,6 +67,10 @@ fn print_last_error(err_func: &str) {
         Some(e) => eprintln!("{} a retourné le code d'erreur {}", err_func, e),
         None => eprintln!("DOH!"),
     }
+}
+
+fn print_capabilities(hPhysicalMonitor: HANDLE) {
+    
 }
 
 fn main() {

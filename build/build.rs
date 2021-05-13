@@ -4,6 +4,8 @@ fn main() {
             Windows::Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
             Windows::Win32::DisplayDevices::{RECT,},
             Windows::Win32::Monitor::{
+                CapabilitiesRequestAndCapabilitiesReply,
+                GetCapabilitiesStringLength,
                 GetNumberOfPhysicalMonitorsFromHMONITOR,
                 GetPhysicalMonitorsFromHMONITOR,
                 DestroyPhysicalMonitor,
@@ -11,7 +13,7 @@ fn main() {
                 GetVCPFeatureAndVCPFeatureReply,
                 PHYSICAL_MONITOR,
                 MC_VCP_CODE_TYPE },
-            Windows::Win32::SystemServices::{BOOL,},
+            Windows::Win32::SystemServices::{BOOL, HANDLE},
             Windows::Win32::WindowsAndMessaging::LPARAM,
         );
     }
