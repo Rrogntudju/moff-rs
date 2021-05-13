@@ -78,6 +78,7 @@ fn read_ne_u16(input: &mut &[u8]) -> u16 {
 
 unsafe fn print_capabilities(hphymon: HANDLE) {
     let mut caplen :u32 = 0;
+   
     if GetCapabilitiesStringLength(hphymon, &mut caplen as *mut u32) != 0 {
         let mut cap = Vec::<u8>::with_capacity(caplen as usize);
         let cap_ptr = cap.as_mut_ptr();
@@ -90,6 +91,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
             
             let mut cap_u16 = Vec::<u16>::with_capacity((caplen / 2) as usize);
             let mut input = &cap[..];
+            
             for _ in 0..caplen / 2 {
                 cap_u16.push(read_ne_u16(&mut input));
             }
