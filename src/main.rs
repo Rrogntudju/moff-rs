@@ -12,7 +12,7 @@ use bindings::Windows::{
     Win32::SystemServices::BOOL,
     Win32::WindowsAndMessaging::LPARAM,
 };
-use std::{mem::forget, usize};
+use std::{mem, usize, fs, env};
 
 unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
@@ -22,7 +22,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             let mons_ptr = mons.as_mut_ptr();
-            forget(mons);
+            mem::forget(mons);
 
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
@@ -56,12 +56,22 @@ fn print_last_error(err_func: &str) {
     }
 }
 
-fn get_last_code() -> u32 {
-
+fn get_last_code() -> u8 {
+    let mut path = env::temp_dir();
+    path.push("moff");
+    path.set_extension("txt");
+    if path.exists() {
+       fs::read_to_string(path).unwrap().parse().unwrap()
+    } else {
+        1
+    }
 }
 
-fn set_last_code(code: u32) {
-
+fn set_last_code(code: u8) {
+    let mut path = env::temp_dir();
+    path.push("moff");
+    path.set_extension("txt");
+    fs::write(path, format!("{}", code)).unwrap();
 }
 
 #[cfg(debug_assertions)]
@@ -76,7 +86,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
     if GetCapabilitiesStringLength(hphymon, &mut len as *mut u32) != 0 {
         let mut cap = Vec::<u8>::with_capacity(len as usize);
         let cap_ptr = cap.as_mut_ptr();
-        forget(cap);
+        mem::forget(cap);
 
         if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), len) != 0 {
             let mut cap = Vec::<u8>::from_raw_parts(cap_ptr, len as usize, len as usize);
