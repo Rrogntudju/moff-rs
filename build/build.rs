@@ -10,9 +10,7 @@ fn main() {
                 GetPhysicalMonitorsFromHMONITOR,
                 DestroyPhysicalMonitor,
                 SetVCPFeature,
-                GetVCPFeatureAndVCPFeatureReply,
-                PHYSICAL_MONITOR,
-                MC_VCP_CODE_TYPE },
+                PHYSICAL_MONITOR},
             Windows::Win32::SystemServices::{BOOL, HANDLE, PSTR},
             Windows::Win32::WindowsAndMessaging::LPARAM,
         );

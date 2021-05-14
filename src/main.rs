@@ -6,15 +6,15 @@ use bindings::Windows::{
     Win32::DisplayDevices::RECT,
     Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
     Win32::Monitor::{
-        DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
-        SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
+        DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR,
+        SetVCPFeature, PHYSICAL_MONITOR,
     },
     Win32::SystemServices::BOOL,
     Win32::WindowsAndMessaging::LPARAM,
 };
 use std::{mem::forget, usize};
 
-unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
+unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
@@ -27,26 +27,11 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
                 for mon in mons {
-                    let mut current: u32 = 0;
-                    let mut max: u32 = 0;
-                    let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
-
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
-
-                    if GetVCPFeatureAndVCPFeatureReply(
-                        mon.hPhysicalMonitor,
-                        0xD6,
-                        &mut vct as *mut MC_VCP_CODE_TYPE,
-                        &mut current as *mut u32,
-                        &mut max as *mut u32,
-                    ) != 0
-                    {
-                        if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current < 4 { 4 } else { 1 }) == 0 {
-                            print_last_error("SetVCPFeature");
-                        }
-                    } else {
-                        print_last_error("GetVCPFeatureAndVCPFeatureReply")
+   
+                    if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, lparam.0 as u32) == 0 {
+                        print_last_error("SetVCPFeature");
                     }
 
                     if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
@@ -69,6 +54,14 @@ fn print_last_error(err_func: &str) {
         Some(e) => eprintln!("{} a retourné le code d'erreur {}", err_func, e),
         None => eprintln!("DOH!"),
     }
+}
+
+fn get_last_code() -> u32 {
+
+}
+
+fn set_last_code(code: u32) {
+
 }
 
 #[cfg(debug_assertions)]
@@ -98,7 +91,10 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
 }
 
 fn main() {
-    if unsafe { !EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM::NULL).as_bool() } {
+    let code = if get_last_code() == 1 { 4 } else { 1 };
+    if unsafe { EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(code as isize)).as_bool() } {
+        set_last_code(code);
+    } else {
         print_last_error("EnumDisplayMonitors");
     }
 }
