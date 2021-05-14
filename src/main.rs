@@ -6,15 +6,15 @@ use bindings::Windows::{
     Win32::DisplayDevices::RECT,
     Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
     Win32::Monitor::{
-        DestroyPhysicalMonitor, GetVCPFeatureAndVCPFeatureReply, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR,
-        SetVCPFeature, PHYSICAL_MONITOR, MC_VCP_CODE_TYPE
+        DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
+        SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
     },
     Win32::SystemServices::BOOL,
     Win32::WindowsAndMessaging::LPARAM,
 };
 use std::{mem, usize};
- 
-static mut LAST_CODE: u32 = 0;  // Pas de soucis...
+
+static mut LAST_CODE: u32 = 0; // Pas de soucis...
 
 unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
@@ -63,7 +63,6 @@ unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *
     BOOL(0)
 }
 
-
 unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
@@ -78,7 +77,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                 for mon in mons {
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
-   
+
                     if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, lparam.0 as u32) == 0 {
                         print_last_error("SetVCPFeature");
                     }
