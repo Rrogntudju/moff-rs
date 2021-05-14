@@ -6,10 +6,10 @@ use bindings::Windows::{
     Win32::DisplayDevices::RECT,
     Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
     Win32::Monitor::{
-        CapabilitiesRequestAndCapabilitiesReply, DestroyPhysicalMonitor, GetCapabilitiesStringLength, GetNumberOfPhysicalMonitorsFromHMONITOR,
-        GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply, SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
+        DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
+        SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
     },
-    Win32::SystemServices::{BOOL, HANDLE, PSTR},
+    Win32::SystemServices::BOOL,
     Win32::WindowsAndMessaging::LPARAM,
 };
 use std::{mem::forget, usize};
@@ -30,6 +30,8 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                     let mut current: u32 = 0;
                     let mut max: u32 = 0;
                     let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
+
+                    #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
 
                     if GetVCPFeatureAndVCPFeatureReply(
@@ -40,10 +42,9 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                         &mut max as *mut u32,
                     ) != 0
                     {
-                        dbg!(current);
-                        /* if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current == 1 { 4 } else { 1 }) == 0 {
+                        if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, if current < 4 { 4 } else { 1 }) == 0 {
                             print_last_error("SetVCPFeature");
-                        } */
+                        }
                     } else {
                         print_last_error("GetVCPFeatureAndVCPFeatureReply")
                     }
@@ -70,20 +71,26 @@ fn print_last_error(err_func: &str) {
     }
 }
 
+#[cfg(debug_assertions)]
+use bindings::Windows::{
+    Win32::Monitor::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
+    Win32::SystemServices::{HANDLE, PSTR},
+};
+#[cfg(debug_assertions)]
 unsafe fn print_capabilities(hphymon: HANDLE) {
-    let mut len_in_chars :u32 = 0;
-   
-    if GetCapabilitiesStringLength(hphymon, &mut len_in_chars as *mut u32) != 0 {
-        let mut cap = Vec::<u8>::with_capacity(len_in_chars as usize);
+    let mut len: u32 = 0;
+
+    if GetCapabilitiesStringLength(hphymon, &mut len as *mut u32) != 0 {
+        let mut cap = Vec::<u8>::with_capacity(len as usize);
         let cap_ptr = cap.as_mut_ptr();
         forget(cap);
 
-        if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), len_in_chars) != 0 {
-            let mut cap = Vec::<u8>::from_raw_parts(cap_ptr, len_in_chars as usize, len_in_chars as usize);
-            cap.pop();  // pop the terminating null
+        if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), len) != 0 {
+            let mut cap = Vec::<u8>::from_raw_parts(cap_ptr, len as usize, len as usize);
+            cap.pop(); // pop the terminating null
             println!("{}", String::from_utf8(cap).unwrap());
         } else {
-            print_last_error("CapabilitiesRequestAndCapabilitiesReply"); 
+            print_last_error("CapabilitiesRequestAndCapabilitiesReply");
         }
     } else {
         print_last_error("GetCapabilitiesStringLength");
