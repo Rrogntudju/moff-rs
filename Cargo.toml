@@ -1,6 +1,6 @@
 [package]
 name = "moff"
-version = "0.1.3"
+version = "0.1.0"
 authors = ["Rrogntudju"]
 edition = "2018"
 build = "build/build.rs"
