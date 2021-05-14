@@ -68,7 +68,6 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
-        dbg!(mon_count);
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             let mons_ptr = mons.as_mut_ptr();
