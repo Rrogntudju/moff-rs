@@ -27,30 +27,28 @@ unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *
 
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
-                for mon in mons {
-                    let mut current: u32 = 0;
-                    let mut max: u32 = 0;
-                    let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
+                let handle = mons[0].hPhysicalMonitor;
+                let mut current: u32 = 0;
+                let mut max: u32 = 0;
+                let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
 
-                    #[cfg(debug_assertions)]
-                    print_capabilities(mon.hPhysicalMonitor);
+                #[cfg(debug_assertions)]
+                print_capabilities(handle);
 
-                    if GetVCPFeatureAndVCPFeatureReply(
-                        mon.hPhysicalMonitor,
-                        0xD6,
-                        &mut vct as *mut MC_VCP_CODE_TYPE,
-                        &mut current as *mut u32,
-                        &mut max as *mut u32,
-                    ) != 0
-                    {
-                        LAST_CODE = current;
-                    } else {
-                        print_last_error("GetVCPFeatureAndVCPFeatureReply")
-                    }
-
-                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
-                        print_last_error("DestroyPhysicalMonitor");
-                    }
+                if GetVCPFeatureAndVCPFeatureReply(
+                    handle,
+                    0xD6,
+                    &mut vct as *mut MC_VCP_CODE_TYPE,
+                    &mut current as *mut u32,
+                    &mut max as *mut u32,
+                ) != 0
+                {
+                    LAST_CODE = current;
+                } else {
+                    print_last_error("GetVCPFeatureAndVCPFeatureReply")
+                }
+                if DestroyPhysicalMonitor(handle) == 0 {
+                    print_last_error("DestroyPhysicalMonitor");
                 }
             } else {
                 print_last_error("GetPhysicalMonitorsFromHMONITOR");
