@@ -47,6 +47,7 @@ unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *
                 } else {
                     print_last_error("GetVCPFeatureAndVCPFeatureReply")
                 }
+                
                 if DestroyPhysicalMonitor(handle) == 0 {
                     print_last_error("DestroyPhysicalMonitor");
                 }
