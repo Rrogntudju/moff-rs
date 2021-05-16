@@ -14,9 +14,10 @@ use bindings::Windows::{
 };
 use std::{mem, usize};
 
-static mut LAST_CODE: u32 = 0; // Pas de soucis...
+static mut CURRENT: u32 = 0; // Pas de soucis...
 
-unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
+// Obtenir la valeur du code VCP 0xD6 pour un des moniteurs
+unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
@@ -27,29 +28,35 @@ unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *
 
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
-                let handle = mons[0].hPhysicalMonitor;
                 let mut current: u32 = 0;
                 let mut max: u32 = 0;
                 let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
 
-                #[cfg(debug_assertions)]
-                print_capabilities(handle);
+                for mon in mons {
+                    #[cfg(debug_assertions)]
+                    print_capabilities(mon.hPhysicalMonitor);
 
-                if GetVCPFeatureAndVCPFeatureReply(
-                    handle,
-                    0xD6,
-                    &mut vct as *mut MC_VCP_CODE_TYPE,
-                    &mut current as *mut u32,
-                    &mut max as *mut u32,
-                ) != 0
-                {
-                    LAST_CODE = current;
-                } else {
-                    print_last_error("GetVCPFeatureAndVCPFeatureReply")
-                }
-                
-                if DestroyPhysicalMonitor(handle) == 0 {
-                    print_last_error("DestroyPhysicalMonitor");
+                    // Il peut arriver que, pour une raison inconnue, cette fontion retourne une erreur DCC/CI
+                    if GetVCPFeatureAndVCPFeatureReply(
+                        mon.hPhysicalMonitor,
+                        0xD6,
+                        &mut vct as *mut MC_VCP_CODE_TYPE,
+                        &mut current as *mut u32,
+                        &mut max as *mut u32,
+                    ) != 0
+                    {
+                        CURRENT = current;
+                    } else {
+                        print_last_error("GetVCPFeatureAndVCPFeatureReply"); // Erreur DCC/CI
+                    }
+
+                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
+                        print_last_error("DestroyPhysicalMonitor");
+                    }
+
+                    if CURRENT > 0 {
+                        return BOOL(0); // Pas d'erreur DCC/CI
+                    }
                 }
             } else {
                 print_last_error("GetPhysicalMonitorsFromHMONITOR");
@@ -59,7 +66,7 @@ unsafe extern "system" fn last_code_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *
         print_last_error("GetNumberOfPhysicalMonitorsFromHMONITOR");
     }
 
-    BOOL(0)
+    BOOL(1)
 }
 
 unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, lparam: LPARAM) -> BOOL {
@@ -103,9 +110,9 @@ fn print_last_error(err_func: &str) {
     }
 }
 
-unsafe fn get_last_code() -> u32 {
-    EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(last_code_proc), LPARAM::NULL);
-    LAST_CODE
+unsafe fn get_current() -> u32 {
+    EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(current_proc), LPARAM::NULL);
+    CURRENT
 }
 
 #[cfg(debug_assertions)]
@@ -124,7 +131,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
 
         if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), len) != 0 {
             let mut cap = Vec::<u8>::from_raw_parts(cap_ptr, len as usize, len as usize);
-            cap.pop(); // pop the terminating null
+            cap.pop(); // Enlever le nul de fin de chaîne
             println!("{}", String::from_utf8(cap).unwrap());
         } else {
             print_last_error("CapabilitiesRequestAndCapabilitiesReply");
@@ -136,8 +143,8 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
 
 fn main() {
     unsafe {
-        let code = if get_last_code() < 4 { 4 } else { 1 };
-        if !EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(code as isize)).as_bool() {
+        let new = if get_current() < 4 { 4 } else { 1 };
+        if !EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(new as isize)).as_bool() {
             print_last_error("EnumDisplayMonitors");
         }
     }
