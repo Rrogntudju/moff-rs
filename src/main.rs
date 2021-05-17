@@ -36,7 +36,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
 
-                    // Il peut arriver que, pour une raison inconnue, cette fontion retourne une erreur DCC/CI
+                    // Il arrive que cette fonction retourne une erreur DCC/CI
                     if GetVCPFeatureAndVCPFeatureReply(
                         mon.hPhysicalMonitor,
                         0xD6,
@@ -55,7 +55,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                     }
 
                     if CURRENT > 0 {
-                        return BOOL(0); // Pas d'erreur DCC/CI
+                        return BOOL(0); // Succès!
                     }
                 }
             } else {
