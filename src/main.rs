@@ -33,9 +33,6 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                 let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
 
                 for mon in mons {
-                    #[cfg(debug_assertions)]
-                    print_capabilities(mon.hPhysicalMonitor);
-
                     // Il arrive que cette fonction retourne une erreur DCC/CI
                     if GetVCPFeatureAndVCPFeatureReply(
                         mon.hPhysicalMonitor,
