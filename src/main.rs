@@ -14,7 +14,7 @@ use bindings::Windows::{
 };
 use std::{mem, usize};
 
-static mut CURRENT: u32 = 0; // Pas de soucis...
+static mut CURRENT: u32 = 0; // Pas de soucis... 
 
 // Obtenir la valeur du code VCP 0xD6 pour un des moniteurs
 unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
