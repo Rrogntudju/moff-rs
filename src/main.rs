@@ -66,7 +66,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
     BOOL(1)
 }
 
-unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, lparam: LPARAM) -> BOOL {
+unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, LPARAM(new): LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
@@ -81,7 +81,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
 
-                    if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, lparam.0 as u32) == 0 {
+                    if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, new as u32) == 0 {
                         print_last_error("SetVCPFeature");
                     }
 
