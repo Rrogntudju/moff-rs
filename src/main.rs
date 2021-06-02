@@ -3,14 +3,14 @@ mod bindings {
 }
 
 use bindings::Windows::{
-    Win32::DisplayDevices::RECT,
-    Win32::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
-    Win32::Monitor::{
+    Win32::Devices::Display::{
         DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
-        SetVCPFeature, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
+        SetVCPFeature, MC_SET_PARAMETER, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
     },
-    Win32::SystemServices::BOOL,
-    Win32::WindowsAndMessaging::LPARAM,
+    Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
+    Win32::System::SystemServices::BOOL,
+    Win32::UI::DisplayDevices::RECT,
+    Win32::UI::WindowsAndMessaging::LPARAM,
 };
 use std::{mem, usize};
 
@@ -30,7 +30,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
                 let mut current: u32 = 0;
                 let mut max: u32 = 0;
-                let mut vct = MC_VCP_CODE_TYPE::MC_SET_PARAMETER;
+                let mut vct = MC_SET_PARAMETER;
 
                 for mon in mons {
                     // Il arrive que cette fonction retourne une erreur DCC/CI
@@ -114,8 +114,8 @@ unsafe fn get_current() -> u32 {
 
 #[cfg(debug_assertions)]
 use bindings::Windows::{
-    Win32::Monitor::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
-    Win32::SystemServices::{HANDLE, PSTR},
+    Win32::Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
+    Win32::System::SystemServices::{HANDLE, PSTR},
 };
 #[cfg(debug_assertions)]
 unsafe fn print_capabilities(hphymon: HANDLE) {
