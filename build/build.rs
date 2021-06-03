@@ -12,7 +12,6 @@ fn main() {
                 DestroyPhysicalMonitor,
                 SetVCPFeature,
                 PHYSICAL_MONITOR,
-                MC_VCP_CODE_TYPE,
                 MC_SET_PARAMETER},
             Windows::Win32::System::SystemServices::{BOOL, HANDLE, PSTR},
             Windows::Win32::UI::WindowsAndMessaging::LPARAM,

@@ -5,7 +5,7 @@ mod bindings {
 use bindings::Windows::{
     Win32::Devices::Display::{
         DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
-        SetVCPFeature, MC_SET_PARAMETER, MC_VCP_CODE_TYPE, PHYSICAL_MONITOR,
+        SetVCPFeature, MC_SET_PARAMETER, PHYSICAL_MONITOR,
     },
     Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
     Win32::System::SystemServices::BOOL,
@@ -34,14 +34,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
 
                 for mon in mons {
                     // Il arrive que cette fonction retourne une erreur DCC/CI
-                    if GetVCPFeatureAndVCPFeatureReply(
-                        mon.hPhysicalMonitor,
-                        0xD6,
-                        &mut vct as *mut MC_VCP_CODE_TYPE,
-                        &mut current as *mut u32,
-                        &mut max as *mut u32,
-                    ) != 0
-                    {
+                    if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
                         CURRENT = current;
                     } else {
                         print_last_error("GetVCPFeatureAndVCPFeatureReply"); // Erreur DCC/CI
