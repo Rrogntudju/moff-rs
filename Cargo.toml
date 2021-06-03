@@ -13,4 +13,6 @@ winres = "0.1"
 windows = "0.10"
 
 [profile.release]
-lto = true 
+lto = true
+codegen-units = 1
+panic = "abort"
