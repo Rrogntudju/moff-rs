@@ -7,10 +7,8 @@ use bindings::Windows::{
         DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
         SetVCPFeature, MC_SET_PARAMETER, PHYSICAL_MONITOR,
     },
+    Win32::Foundation::{BOOL, LPARAM, RECT},
     Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
-    Win32::System::SystemServices::BOOL,
-    Win32::UI::DisplayDevices::RECT,
-    Win32::UI::WindowsAndMessaging::LPARAM,
 };
 use std::{mem, usize};
 
@@ -106,9 +104,9 @@ unsafe fn get_current() -> u32 {
 }
 
 #[cfg(debug_assertions)]
-use bindings::Windows::{
-    Win32::Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
-    Win32::System::SystemServices::{HANDLE, PSTR},
+use bindings::Windows::Win32::{
+    Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
+    Foundation::{HANDLE, PSTR},
 };
 #[cfg(debug_assertions)]
 unsafe fn print_capabilities(hphymon: HANDLE) {
