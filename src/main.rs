@@ -99,6 +99,7 @@ fn print_last_error(err_func: &str) {
 }
 
 unsafe fn get_current() -> u32 {
+    CURRENT = 0;
     EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(current_proc), LPARAM::NULL);
     CURRENT
 }
