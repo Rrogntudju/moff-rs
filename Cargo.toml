@@ -10,7 +10,7 @@ windows = "0.13"
 
 [build-dependencies]
 winres = "0.1"
-windows = "0.13"
+windows = "0.17"
 
 [profile.release]
 lto = true
