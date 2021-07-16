@@ -101,7 +101,7 @@ fn print_last_error(err_func: &str) {
 unsafe fn get_current() -> u32 {
     CURRENT = 0;
     EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(current_proc), LPARAM::NULL);
-    CURRENT
+    if CURRENT < 4 { 1 } else { 4 } // 4 = ON, 1 = OFF
 }
 
 #[cfg(debug_assertions)]
@@ -132,7 +132,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
 
 fn main() {
     unsafe {
-        let new = if get_current() < 4 { 4 } else { 1 };
+        let new = if get_current() == 1 { 4 } else { 1 }; // Basculer
         if !EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(new as isize)).as_bool() {
             print_last_error("EnumDisplayMonitors");
         }
