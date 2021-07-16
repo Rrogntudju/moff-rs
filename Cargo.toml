@@ -6,7 +6,7 @@ edition = "2018"
 build = "build/build.rs"
 
 [dependencies]
-windows = "0.13"
+windows = "0.17"
 
 [build-dependencies]
 winres = "0.1"
