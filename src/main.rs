@@ -31,6 +31,9 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                 let mut vct = MC_SET_PARAMETER;
 
                 for mon in mons {
+                    #[cfg(debug_assertions)]
+                    print_capabilities(mon.hPhysicalMonitor);
+                    
                     // Il arrive que cette fonction retourne une erreur DCC/CI
                     if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
                         CURRENT = current;
@@ -69,9 +72,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
                 let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
                 for mon in mons {
-                    #[cfg(debug_assertions)]
-                    print_capabilities(mon.hPhysicalMonitor);
-
+                    
                     if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, new as u32) == 0 {
                         print_last_error("SetVCPFeature");
                     }
