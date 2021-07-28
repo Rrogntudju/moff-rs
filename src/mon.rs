@@ -104,9 +104,9 @@ pub fn get_current_d6() -> Option<u32> {
         EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(current_proc), LPARAM::NULL);
         match CURRENT {
             0 => None,
-            1 => Some(1),
-            _ => Some(4),
-        } // 1 = OFF, 4 = ON
+            4 => Some(4), // OFF
+            _ => Some(1), // ON
+        }
     }
 }
 
@@ -150,6 +150,6 @@ mod tests {
 
     #[test]
     fn test_get_current_d6() {
-        assert_eq!(get_current_d6(), Some(4));
+        assert_eq!(get_current_d6(), Some(1));
     }
 }
