@@ -6,11 +6,11 @@ edition = "2018"
 build = "build/build.rs"
 
 [dependencies]
-windows = "0.17"
+windows = "0.18"
 
 [build-dependencies]
 winres = "0.1"
-windows = "0.17"
+windows = "0.18"
 
 [profile.release]
 lto = true
