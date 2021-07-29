@@ -44,7 +44,9 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                     if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
                         print_last_error("DestroyPhysicalMonitor");
                     }
-
+                    #[cfg(debug_assertions)]
+                    dbg!(CURRENT);
+                    
                     if CURRENT > 0 {
                         return BOOL(0); // Succès!
                     }
@@ -98,23 +100,20 @@ fn print_last_error(err_func: &str) {
     }
 }
 
-pub fn get_current_d6() -> Option<u32> {
+pub fn get_d6() -> u32 {
     unsafe {
         CURRENT = 0;
         EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(current_proc), LPARAM::NULL);
         match CURRENT {
-            0 => None,
-            4 => Some(4), // OFF
-            _ => Some(1), // ON
+            4 => 4, // OFF
+            _ => 1, // ON
         }
     }
 }
 
 pub fn set_d6(new: u32) {
     unsafe {
-        if !EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(new as isize)).as_bool() {
-            print_last_error("EnumDisplayMonitors");
-        }
+        EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(new as isize));
     }
 }
 
@@ -146,10 +145,16 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
 
 #[cfg(test)]
 mod tests {
-    use super::get_current_d6;
+    use super::{get_d6, set_d6};
 
     #[test]
-    fn test_get_current_d6() {
-        assert_eq!(get_current_d6(), Some(1));
+    fn test_d6() {
+        use std::{thread, time};
+
+        assert_eq!(get_d6(), 1);
+        set_d6(4); // OFF
+        thread::sleep(time::Duration::from_millis(1000));
+        assert_eq!(get_d6(), 4);
+        set_d6(1); // ON
     }
 }
