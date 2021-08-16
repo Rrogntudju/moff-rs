@@ -10,7 +10,7 @@ use bindings::Windows::{
     Win32::Foundation::{BOOL, LPARAM, RECT},
     Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
 };
-use std::{mem, usize};
+use std::{mem, ptr::null_mut, usize};
 
 static mut CURRENT: u32 = 0; // Pas de soucis...
 
@@ -103,7 +103,7 @@ fn print_last_error(err_func: &str) {
 pub fn get_d6() -> u32 {
     unsafe {
         CURRENT = 0;
-        EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(current_proc), LPARAM::NULL);
+        EnumDisplayMonitors(HDC::NULL, null_mut::<RECT>(), Some(current_proc), LPARAM::NULL);
         match CURRENT {
             4 => 4, // OFF
             _ => 1, // ON
@@ -113,7 +113,7 @@ pub fn get_d6() -> u32 {
 
 pub fn set_d6(new: u32) {
     unsafe {
-        EnumDisplayMonitors(HDC::NULL, 0 as *mut RECT, Some(switch_proc), LPARAM(new as isize));
+        EnumDisplayMonitors(HDC::NULL, null_mut::<RECT>(), Some(switch_proc), LPARAM(new as isize));
     }
 }
 
