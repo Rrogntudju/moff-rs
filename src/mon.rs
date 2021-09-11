@@ -153,7 +153,7 @@ mod tests {
 
         assert_eq!(get_d6(), 1);
         set_d6(4); // OFF
-        thread::sleep(time::Duration::from_millis(1000));
+        thread::sleep(time::Duration::from_millis(100));
         assert_eq!(get_d6(), 4);
         set_d6(1); // ON
     }
