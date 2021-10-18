@@ -35,7 +35,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
 
-                    // Il arrive que cette fonction retourne une erreur DCC/CI
+                    // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction 
                     if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
                         CURRENT.with(|c| c.set(current));
                     } else {
@@ -102,8 +102,9 @@ fn print_last_error(err_func: &str) {
 }
 
 pub fn get_d6() -> u32 {
+    CURRENT.with(|c| c.set(0)); // En cas d'erreur DCC/CI
     unsafe {
-        EnumDisplayMonitors(HDC::NULL, null_mut::<RECT>(), Some(current_proc), LPARAM::NULL);
+        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(current_proc), LPARAM(0));
     }
     CURRENT.with(|c| match c.get() {
         4 => 4, // OFF
@@ -113,7 +114,7 @@ pub fn get_d6() -> u32 {
 
 pub fn set_d6(new: u32) {
     unsafe {
-        EnumDisplayMonitors(HDC::NULL, null_mut::<RECT>(), Some(switch_proc), LPARAM(new as isize));
+        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(switch_proc), LPARAM(new as isize));
     }
 }
 
@@ -126,6 +127,7 @@ use bindings::Windows::Win32::{
 unsafe fn print_capabilities(hphymon: HANDLE) {
     let mut len: u32 = 0;
 
+    // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction 
     if GetCapabilitiesStringLength(hphymon, &mut len as *mut u32) != 0 {
         let mut cap = Vec::<u8>::with_capacity(len as usize);
         let cap_ptr = cap.as_mut_ptr();
@@ -139,7 +141,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
             print_last_error("CapabilitiesRequestAndCapabilitiesReply");
         }
     } else {
-        print_last_error("GetCapabilitiesStringLength");
+        print_last_error("GetCapabilitiesStringLength");    // Erreur DCC/CI
     }
 }
 
@@ -153,7 +155,7 @@ mod tests {
 
         assert_eq!(get_d6(), 1);
         set_d6(4); // OFF
-        thread::sleep(time::Duration::from_millis(1000));
+        thread::sleep(time::Duration::from_millis(100));
         assert_eq!(get_d6(), 4);
         set_d6(1); // ON
     }
