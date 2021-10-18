@@ -10,9 +10,10 @@ use bindings::Windows::{
     Win32::Foundation::{BOOL, LPARAM, RECT},
     Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
 };
-use std::{mem, ptr::null_mut, usize};
+use std::thread_local;
+use std::{cell::Cell, mem, ptr::null_mut, usize};
 
-static mut CURRENT: u32 = 0; // Pas de soucis...
+thread_local!(static CURRENT: Cell<u32> = Cell::new(0));
 
 // Obtenir la valeur du code VCP 0xD6 pour un des moniteurs
 unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
@@ -36,7 +37,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
 
                     // Il arrive que cette fonction retourne une erreur DCC/CI
                     if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
-                        CURRENT = current;
+                        CURRENT.with(|c| c.set(current));
                     } else {
                         print_last_error("GetVCPFeatureAndVCPFeatureReply"); // Erreur DCC/CI
                     }
@@ -44,10 +45,8 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                     if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
                         print_last_error("DestroyPhysicalMonitor");
                     }
-                    #[cfg(debug_assertions)]
-                    dbg!(CURRENT);
-                    
-                    if CURRENT > 0 {
+
+                    if current > 0 {
                         return BOOL(0); // Succès!
                     }
                 }
@@ -102,13 +101,12 @@ fn print_last_error(err_func: &str) {
 
 pub fn get_d6() -> u32 {
     unsafe {
-        CURRENT = 0;
         EnumDisplayMonitors(HDC::NULL, null_mut::<RECT>(), Some(current_proc), LPARAM::NULL);
-        match CURRENT {
-            4 => 4, // OFF
-            _ => 1, // ON
-        }
     }
+    CURRENT.with(|c| match c.get() {
+        4 => 4, // OFF
+        _ => 1, // ON
+    })
 }
 
 pub fn set_d6(new: u32) {
