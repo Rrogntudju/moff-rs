@@ -46,7 +46,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                         print_last_error("DestroyPhysicalMonitor");
                     }
 
-                    if current > 0 {
+                    if CURRENT.with(|c| c.get() > 0) {
                         return BOOL(0); // Succès!
                     }
                 }
