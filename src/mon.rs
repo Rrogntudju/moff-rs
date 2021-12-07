@@ -1,8 +1,6 @@
-mod bindings {
-    windows::include_bindings!();
-}
-
-use bindings::Windows::{
+use std::thread_local;
+use std::{cell::Cell, mem, ptr::null_mut, usize};
+use windows::{
     Win32::Devices::Display::{
         DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
         SetVCPFeature, MC_SET_PARAMETER, PHYSICAL_MONITOR,
@@ -10,8 +8,6 @@ use bindings::Windows::{
     Win32::Foundation::{BOOL, LPARAM, RECT},
     Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR},
 };
-use std::thread_local;
-use std::{cell::Cell, mem, ptr::null_mut, usize};
 
 thread_local!(static CURRENT: Cell<u32> = Cell::new(0));
 
@@ -35,7 +31,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
 
-                    // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction 
+                    // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
                     if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
                         CURRENT.with(|c| c.set(current));
                     } else {
@@ -119,7 +115,7 @@ pub fn set_d6(new: u32) {
 }
 
 #[cfg(debug_assertions)]
-use bindings::Windows::Win32::{
+use windows::Win32::{
     Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
     Foundation::{HANDLE, PSTR},
 };
@@ -127,7 +123,7 @@ use bindings::Windows::Win32::{
 unsafe fn print_capabilities(hphymon: HANDLE) {
     let mut len: u32 = 0;
 
-    // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction 
+    // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
     if GetCapabilitiesStringLength(hphymon, &mut len as *mut u32) != 0 {
         let mut cap = Vec::<u8>::with_capacity(len as usize);
         let cap_ptr = cap.as_mut_ptr();
@@ -141,7 +137,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
             print_last_error("CapabilitiesRequestAndCapabilitiesReply");
         }
     } else {
-        print_last_error("GetCapabilitiesStringLength");    // Erreur DCC/CI
+        print_last_error("GetCapabilitiesStringLength"); // Erreur DCC/CI
     }
 }
 
