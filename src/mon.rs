@@ -115,9 +115,12 @@ pub fn set_d6(new: u32) {
 }
 
 #[cfg(debug_assertions)]
-use windows::Win32::{
-    Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
-    Foundation::{HANDLE, PSTR},
+use windows::{
+    core::PSTR,
+    Win32::{
+        Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
+        Foundation::HANDLE,
+    },
 };
 #[cfg(debug_assertions)]
 unsafe fn print_capabilities(hphymon: HANDLE) {
