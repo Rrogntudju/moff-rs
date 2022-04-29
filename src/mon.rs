@@ -1,5 +1,5 @@
 use std::thread_local;
-use std::{cell::Cell, mem, ptr::null_mut, usize};
+use std::{cell::Cell, ptr::null_mut, usize};
 use windows::{
     Win32::Devices::Display::{
         DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply,
@@ -18,11 +18,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
-            let mons_ptr = mons.as_mut_ptr();
-            mem::forget(mons);
-
-            if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
-                let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
+            if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
                 let mut current: u32 = 0;
                 let mut max: u32 = 0;
                 let mut vct = MC_SET_PARAMETER;
@@ -65,11 +61,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
-            let mons_ptr = mons.as_mut_ptr();
-            mem::forget(mons);
-
-            if GetPhysicalMonitorsFromHMONITOR(hmonitor, mon_count, mons_ptr) != 0 {
-                let mons = Vec::<PHYSICAL_MONITOR>::from_raw_parts(mons_ptr, mon_count as usize, mon_count as usize);
+            if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
                 for mon in mons {
                     if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, new as u32) == 0 {
                         print_last_error("SetVCPFeature");
@@ -115,12 +107,9 @@ pub fn set_d6(new: u32) {
 }
 
 #[cfg(debug_assertions)]
-use windows::{
-    core::PSTR,
-    Win32::{
-        Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
-        Foundation::HANDLE,
-    },
+use windows::Win32::{
+    Devices::Display::{CapabilitiesRequestAndCapabilitiesReply, GetCapabilitiesStringLength},
+    Foundation::HANDLE,
 };
 #[cfg(debug_assertions)]
 unsafe fn print_capabilities(hphymon: HANDLE) {
@@ -129,11 +118,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
     // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
     if GetCapabilitiesStringLength(hphymon, &mut len as *mut u32) != 0 {
         let mut cap = Vec::<u8>::with_capacity(len as usize);
-        let cap_ptr = cap.as_mut_ptr();
-        mem::forget(cap);
-
-        if CapabilitiesRequestAndCapabilitiesReply(hphymon, PSTR(cap_ptr), len) != 0 {
-            let mut cap = Vec::<u8>::from_raw_parts(cap_ptr, len as usize, len as usize);
+        if CapabilitiesRequestAndCapabilitiesReply(hphymon, &mut cap) != 0 {
             cap.pop(); // Enlever le nul de fin de chaîne
             println!("{}", String::from_utf8(cap).unwrap());
         } else {
