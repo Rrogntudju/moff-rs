@@ -18,6 +18,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
+            mons.set_len(mon_count as usize);
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
                 let mut current: u32 = 0;
                 let mut max: u32 = 0;
@@ -61,6 +62,7 @@ unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
+            mons.set_len(mon_count as usize);
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
                 for mon in mons {
                     if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, new as u32) == 0 {
@@ -118,6 +120,7 @@ unsafe fn print_capabilities(hphymon: HANDLE) {
     // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
     if GetCapabilitiesStringLength(hphymon, &mut len as *mut u32) != 0 {
         let mut cap = Vec::<u8>::with_capacity(len as usize);
+        cap.set_len(len as usize);
         if CapabilitiesRequestAndCapabilitiesReply(hphymon, &mut cap) != 0 {
             cap.pop(); // Enlever le nul de fin de chaîne
             println!("{}", String::from_utf8(cap).unwrap());
