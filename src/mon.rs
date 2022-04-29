@@ -20,8 +20,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             mons.set_len(mon_count as usize);
             if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
-                let (mut current, mut max) = (0, 0);
-                let mut vct = MC_SET_PARAMETER;
+                let (mut current, mut max, mut vct) = (0, 0, MC_SET_PARAMETER);
 
                 for mon in mons {
                     #[cfg(debug_assertions)]
