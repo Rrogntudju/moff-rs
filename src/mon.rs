@@ -28,10 +28,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
                      
                     // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
                     if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
-                        if current > 0 {
-                            CURRENT.with(|c| c.set(current));
-                            current = 0;
-                        }
+                        CURRENT.with(|c| c.set(current));
                     } else {
                         print_last_error("GetVCPFeatureAndVCPFeatureReply"); // Erreur DCC/CI
                     }
