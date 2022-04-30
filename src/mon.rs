@@ -11,8 +11,7 @@ use windows::{
 
 thread_local!(static CURRENT: Cell<u32> = Cell::new(0));
 
-// Obtenir la valeur du code VCP 0xD6 pour un des moniteurs
-unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
+unsafe extern "system" fn get_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
@@ -50,7 +49,7 @@ unsafe extern "system" fn current_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mu
     BOOL(1)
 }
 
-unsafe extern "system" fn switch_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, LPARAM(new): LPARAM) -> BOOL {
+unsafe extern "system" fn set_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, LPARAM(new): LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
     if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
@@ -88,7 +87,7 @@ fn print_last_error(err_func: &str) {
 pub fn get_d6() -> u32 {
     CURRENT.with(|c| c.set(0)); // En cas d'erreur DCC/CI
     unsafe {
-        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(current_proc), LPARAM(0));
+        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(get_proc), LPARAM(0));
     }
     CURRENT.with(|c| match c.get() {
         4 => 4, // OFF
@@ -98,7 +97,7 @@ pub fn get_d6() -> u32 {
 
 pub fn set_d6(new: u32) {
     unsafe {
-        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(switch_proc), LPARAM(new as isize));
+        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(set_proc), LPARAM(new as isize));
     }
 }
 
