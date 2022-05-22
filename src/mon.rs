@@ -24,7 +24,7 @@ unsafe extern "system" fn get_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RE
                 for mon in mons {
                     #[cfg(debug_assertions)]
                     print_capabilities(mon.hPhysicalMonitor);
-                     
+
                     // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
                     if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
                         CURRENT.with(|c| c.set(current));
