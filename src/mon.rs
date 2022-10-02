@@ -26,7 +26,7 @@ unsafe extern "system" fn get_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RE
                     print_capabilities(mon.hPhysicalMonitor);
 
                     // S'il est à OFF, le moniteur peut retourner une erreur DCC/CI pour cette fonction
-                    if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, &mut vct, &mut current, &mut max) != 0 {
+                    if GetVCPFeatureAndVCPFeatureReply(mon.hPhysicalMonitor, 0xD6, Some(&mut vct), &mut current, Some(&mut max)) != 0 {
                         CURRENT.with(|c| c.set(current));
                     } else {
                         print_last_error("GetVCPFeatureAndVCPFeatureReply"); // Erreur DCC/CI
@@ -87,7 +87,7 @@ fn print_last_error(err_func: &str) {
 pub fn get_d6() -> u32 {
     CURRENT.with(|c| c.set(0)); // En cas d'erreur DCC/CI
     unsafe {
-        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(get_proc), LPARAM(0));
+        EnumDisplayMonitors(HDC(0), Some(null_mut::<RECT>()), Some(get_proc), LPARAM(0));
     }
     CURRENT.with(|c| match c.get() {
         4 => 4, // OFF
@@ -97,7 +97,7 @@ pub fn get_d6() -> u32 {
 
 pub fn set_d6(new: u32) {
     unsafe {
-        EnumDisplayMonitors(HDC(0), null_mut::<RECT>(), Some(set_proc), LPARAM(new as isize));
+        EnumDisplayMonitors(HDC(0), Some(null_mut::<RECT>()), Some(set_proc), LPARAM(new as isize));
     }
 }
 
