@@ -14,11 +14,11 @@ thread_local!(static CURRENT: Cell<u32> = Cell::new(0));
 unsafe extern "system" fn get_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, _lparam: LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
-    if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
+    if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != BOOL(0) {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             mons.set_len(mon_count as usize);
-            if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
+            if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) == BOOL(1) {
                 let (mut current, mut max, mut vct) = (0, 0, MC_SET_PARAMETER);
 
                 for mon in mons {
@@ -32,7 +32,7 @@ unsafe extern "system" fn get_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RE
                         print_last_error("GetVCPFeatureAndVCPFeatureReply"); // Erreur DCC/CI
                     }
 
-                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
+                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == BOOL(0) {
                         print_last_error("DestroyPhysicalMonitor");
                     }
                     #[cfg(debug_assertions)]
@@ -52,17 +52,17 @@ unsafe extern "system" fn get_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RE
 unsafe extern "system" fn set_proc(hmonitor: HMONITOR, _hdc: HDC, _rect: *mut RECT, LPARAM(new): LPARAM) -> BOOL {
     let mut mon_count: u32 = 0;
 
-    if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) != 0 {
+    if GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut mon_count as *mut u32) == BOOL(1) {
         if mon_count > 0 {
             let mut mons = Vec::<PHYSICAL_MONITOR>::with_capacity(mon_count as usize);
             mons.set_len(mon_count as usize);
-            if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) != 0 {
+            if GetPhysicalMonitorsFromHMONITOR(hmonitor, &mut mons) == BOOL(1) {
                 for mon in mons {
                     if SetVCPFeature(mon.hPhysicalMonitor, 0xD6, new as u32) == 0 {
                         print_last_error("SetVCPFeature");
                     }
 
-                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == 0 {
+                    if DestroyPhysicalMonitor(mon.hPhysicalMonitor) == BOOL(0) {
                         print_last_error("DestroyPhysicalMonitor");
                     }
                 }
